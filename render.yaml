@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: documents-converter
+    runtime: node
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false  # Render will prompt you to enter this manually
