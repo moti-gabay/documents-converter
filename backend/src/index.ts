@@ -32,7 +32,7 @@ app.use('/api/convert', convertRouter);
 
 // Global error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error & { status?: number; code?: string }, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof multer.MulterError) {
     const message =
       err.code === 'LIMIT_FILE_SIZE' ? 'File exceeds the 10 MB limit.' : err.message;
