@@ -71,3 +71,16 @@ export async function convertTextToWord(text: string): Promise<Blob> {
     return extractError(err);
   }
 }
+
+export async function convertPdfToWord(file: File): Promise<Blob> {
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const { data } = await api.post<Blob>('/api/convert/pdf-to-word', form, {
+      responseType: 'blob',
+    });
+    return data;
+  } catch (err) {
+    return extractError(err);
+  }
+}

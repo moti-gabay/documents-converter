@@ -8,6 +8,7 @@ import {
   convertImageToWord,
   convertTextToPdf,
   convertTextToWord,
+  convertPdfToWord,
 } from './services/api';
 import type { AppStatus, ConversionMode, OutputFormat } from './types';
 import './App.css';
@@ -32,7 +33,10 @@ export default function App() {
   const [statusMsg, setStatusMsg] = useState('');
 
   const isLoading = status === 'loading';
-  const canConvert = !isLoading && (mode === 'image' ? !!file : text.trim().length > 0);
+
+  const canConvert = !isLoading && (
+    mode === 'text' ? text.trim().length > 0 : !!file
+  );
 
   const handleModeChange = (next: ConversionMode) => {
     setMode(next);
@@ -49,7 +53,11 @@ export default function App() {
       let blob: Blob;
       let filename: string;
 
-      if (mode === 'image' && file) {
+      if (mode === 'pdf' && file) {
+        blob = await convertPdfToWord(file);
+        filename = file.name.replace(/\.pdf$/i, '') + '.docx';
+
+      } else if (mode === 'image' && file) {
         if (format === 'pdf') {
           blob = await convertImageToPdf(file);
           filename = file.name.replace(/\.[^.]+$/, '') + '.pdf';
@@ -57,6 +65,7 @@ export default function App() {
           blob = await convertImageToWord(file);
           filename = file.name.replace(/\.[^.]+$/, '') + '.docx';
         }
+
       } else {
         if (format === 'pdf') {
           blob = await convertTextToPdf(text);
@@ -69,10 +78,10 @@ export default function App() {
 
       triggerDownload(blob, filename);
       setStatus('success');
-      setStatusMsg(`Converted to ${format === 'pdf' ? 'PDF' : 'Word'} — download started!`);
+      setStatusMsg('ההמרה הושלמה — הקובץ מורד!');
     } catch (err) {
       setStatus('error');
-      setStatusMsg(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      setStatusMsg(err instanceof Error ? err.message : 'שגיאה בלתי צפויה.');
     }
   };
 
@@ -84,7 +93,7 @@ export default function App() {
   };
 
   const loadingLabel =
-    mode === 'image' && format === 'word' ? 'Extracting text with AI…' : 'Converting…';
+    mode === 'image' && format === 'word' ? 'מחלץ טקסט עם AI…' : 'ממיר…';
 
   return (
     <div className="app">
@@ -109,8 +118,8 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 className="app-title">Document Converter</h1>
-            <p className="app-subtitle">Images &amp; text to PDF or Word — Hebrew &amp; English OCR</p>
+            <h1 className="app-title">ממיר מסמכים</h1>
+            <p className="app-subtitle">תמונות, PDF וטקסט → Word או PDF · עברית ואנגלית</p>
           </div>
         </header>
 
@@ -119,26 +128,27 @@ export default function App() {
           <ModeSelector mode={mode} onChange={handleModeChange} />
 
           <div className="card-body">
-            {mode === 'image' ? (
-              <DropZone
-                file={file}
-                onFileAccepted={setFile}
-                onFileRemoved={() => setFile(null)}
-                disabled={isLoading}
-              />
-            ) : (
+            {mode === 'text' ? (
               <div className="text-zone">
                 <textarea
                   className="text-area"
-                  placeholder="Paste or type your text or Markdown here…&#10;&#10;# Heading&#10;**bold** *italic*"
+                  placeholder="הדבק או הקלד טקסט או Markdown כאן…&#10;&#10;# כותרת&#10;**מודגש** *נטוי*"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   disabled={isLoading}
                   rows={11}
                   dir="auto"
                 />
-                <p className="text-hint">Supports Markdown: <code># H1</code>, <code>## H2</code>, <code>**bold**</code>, <code>*italic*</code></p>
+                <p className="text-hint">תומך ב-Markdown: <code># כותרת</code>, <code>**מודגש**</code>, <code>*נטוי*</code></p>
               </div>
+            ) : (
+              <DropZone
+                mode={mode}
+                file={file}
+                onFileAccepted={setFile}
+                onFileRemoved={() => setFile(null)}
+                disabled={isLoading}
+              />
             )}
 
             <FormatSelector format={format} mode={mode} onChange={setFormat} />
@@ -161,7 +171,7 @@ export default function App() {
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  Convert &amp; Download
+                  המר והורד
                 </>
               )}
             </button>
@@ -172,7 +182,7 @@ export default function App() {
 
         {/* ── Footer ─────────────────────────────────────────── */}
         <footer className="app-footer">
-          Supports JPG &amp; PNG up to 10 MB &bull; Powered by GPT-4o Vision for OCR
+          תומך ב-JPG, PNG עד 10 MB · PDF עד 25 MB · מופעל על ידי GPT-4o Vision
         </footer>
       </div>
     </div>

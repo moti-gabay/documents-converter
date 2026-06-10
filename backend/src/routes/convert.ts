@@ -1,8 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { upload } from '../middleware/upload';
+import { upload, uploadPdf } from '../middleware/upload';
 import { convertImageToPdf } from '../services/imageToPdf';
 import { convertImageToWord } from '../services/imageToWord';
 import { convertTextToPdf, convertTextToWord } from '../services/textToDocument';
+import { convertPdfToWord } from '../services/pdfToWord';
 
 const router = Router();
 
@@ -91,5 +92,28 @@ router.post('/text-to-word', async (req: Request, res: Response, next: NextFunct
     next(err);
   }
 });
+
+// ── PDF → Word ─────────────────────────────────────────────────────────────
+router.post(
+  '/pdf-to-word',
+  uploadPdf.single('file'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+
+      const docx = await convertPdfToWord(req.file.buffer);
+      const filename = encodeURIComponent(req.file.originalname.replace(/\.[^.]+$/, '') + '.docx');
+
+      res.set({
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': docx.length,
+      });
+      return res.send(docx);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;
